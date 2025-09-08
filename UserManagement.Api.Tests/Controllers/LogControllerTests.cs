@@ -89,7 +89,7 @@ public class LogControllerTests
         A.CallTo(() => _logService.GetByIdAsync(1)).Returns(log);
 
         // Act
-        var result = await _controller.View(1);
+        var result = await _controller.GetLog(1);
 
         // Assert
         var okResult = result as OkObjectResult;
@@ -128,7 +128,7 @@ public class LogControllerTests
         // Assert
         var badRequestResult = result as BadRequestObjectResult;
         badRequestResult.Should().NotBeNull();
-        badRequestResult!.Value.Should().Be("The `from` timestamp is in the future, it may cause no data to return.");
+        badRequestResult.Value.Should().Be("The `from` timestamp is in the future, it may cause no data to return.");
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class LogControllerTests
             .Returns<Log?>(null);
 
         // Act
-        var result = await _controller.View(99);
+        var result = await _controller.GetLog(99);
 
         // Assert
         result.Should().BeOfType<NotFoundResult>();

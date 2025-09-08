@@ -31,7 +31,6 @@ namespace UserManagement.Api.Controllers
         [ProducesResponseType(typeof(List<LogModel>), Status200OK)]
         [ProducesResponseType(Status500InternalServerError)]
         [HttpGet]
-        [HttpGet]
         public async Task<IActionResult> GetLogs(
             string? search,
             DateTime? from,
@@ -72,7 +71,7 @@ namespace UserManagement.Api.Controllers
         [ProducesResponseType(Status404NotFound)]
         [ProducesResponseType(Status500InternalServerError)]
         [HttpGet("{id:long}")]
-        public async Task<IActionResult> View(long? id)
+        public async Task<IActionResult> GetLog(long? id)
         {
             if (id is null)
                 return NotFound();

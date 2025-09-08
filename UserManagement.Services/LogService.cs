@@ -2,48 +2,89 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Data.Repositories.Interfaces;
 using UserManagement.Services.Domain.Models;
+using UserManagement.Services.Exceptions;
 using UserManagement.Services.Interfaces;
 
 namespace UserManagement.Services;
 
-public class LogService(IRepository<Log> repository) : ILogService
+public class LogService(
+    IRepository<Log> repository,
+    ILogger<LogService> logger) : ILogService
 {
+    private const string GenericErrorMessage = "An unexpected error occurred, please try again. If the problem persists, please contact our support team.";
+
     public async Task<(List<Log> Logs, int TotalPages)> GetPaginatedResultsAsync(PaginationFilter filter)
     {
-        Expression<Func<Log, bool>> predicate = _ => true;
-        if (!string.IsNullOrWhiteSpace(filter.Search))
-            predicate = CombinePredicates(
+        try
+        {
+            Expression<Func<Log, bool>> predicate = _ => true;
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+                predicate = CombinePredicates(
+                    predicate,
+                    l => l.Details != null && l.Details.ToLower().Contains(filter.Search.Trim().ToLower()));
+
+            if (filter.From.HasValue)
+                predicate = CombinePredicates(predicate, l => l.Timestamp >= filter.From.Value);
+
+            if (filter.To.HasValue)
+                predicate = CombinePredicates(predicate, l => l.Timestamp <= filter.To.Value);
+
+            if (filter.UserId.HasValue)
+                predicate = CombinePredicates(predicate, l => l.UserId == filter.UserId);
+
+            var descending = filter.SortBy!.Split('_').Last() is "desc";
+
+            return await repository.GetPaginatedResultsAsync(
                 predicate,
-                l => l.Details != null && l.Details.ToLower().Contains(filter.Search.Trim().ToLower()));
+                GetSortBy(filter.SortBy!),
+                descending,
+                filter.CurrentPage,
+                filter.PageSize);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e,
+                "Encountered an error while retrieving log entries");
 
-        if (filter.From.HasValue)
-            predicate = CombinePredicates(predicate, l => l.Timestamp >= filter.From.Value);
-
-        if (filter.To.HasValue)
-            predicate = CombinePredicates(predicate, l => l.Timestamp <= filter.To.Value);
-
-        if (filter.UserId.HasValue)
-            predicate = CombinePredicates(predicate, l => l.UserId == filter.UserId);
-
-        var descending = filter.SortBy!.Split('_').Last() is "desc";
-
-        return await repository.GetPaginatedResultsAsync(
-            predicate,
-            GetSortBy(filter.SortBy!),
-            descending,
-            filter.CurrentPage,
-            filter.PageSize);
+            throw new ApiException(HttpStatusCode.InternalServerError, GenericErrorMessage);
+        }
     }
 
-    public Task<Log?> GetByIdAsync(long id) =>
-        repository.GetByIdAsync(id);
+    public async Task<Log?> GetByIdAsync(long id)
+    {
+        try
+        {
+            return await repository.GetByIdAsync(id);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e,
+                "Encountered an error while retrieving log entry for id [{LogId}]", id);
 
-    public Task AddAsync(Log log) =>
-        repository.CreateAsync(log);
+            throw new ApiException(HttpStatusCode.InternalServerError, GenericErrorMessage);
+        }
+    }
+
+    public async Task AddAsync(Log log)
+    {
+        try
+        {
+            await repository.CreateAsync(log);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e,
+                "Encountered an error while adding a new log entry for user id [{UserId}]", log.UserId);
+
+            throw new ApiException(HttpStatusCode.InternalServerError, GenericErrorMessage);
+        }
+    }
 
     private static Expression<Func<T, bool>> CombinePredicates<T>(
         Expression<Func<T, bool>> first,

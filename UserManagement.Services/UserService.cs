@@ -16,7 +16,7 @@ public class UserService(
     ILogger<UserService> logger) : IUserService
 {
 
-    private const string GenericErrorMessage = "An unexpected error occurred. Please try again. If the problem persists, please contact our support team.";
+    private const string GenericErrorMessage = "An unexpected error occurred, please try again. If the problem persists, please contact our support team.";
     public async Task<List<User>> GetAllAsync(CancellationToken cancellationToken)
     {
         try

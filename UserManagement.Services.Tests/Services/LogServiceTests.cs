@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Data.Entities.Enums;
 using UserManagement.Data.Repositories.Interfaces;
@@ -12,11 +13,12 @@ namespace UserManagement.Services.Tests.Services;
 public class LogServiceTests
 {
     private readonly IRepository<Log> _repository = A.Fake<IRepository<Log>>();
+    private readonly ILogger<LogService> _logger = A.Fake<ILogger<LogService>>();
     private readonly LogService _service;
 
     public LogServiceTests()
     {
-        _service = new LogService(_repository);
+        _service = new LogService(_repository, _logger);
     }
 
     [Fact]
