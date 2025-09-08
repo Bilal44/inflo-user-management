@@ -12,11 +12,17 @@ public class AuthMiddleware(RequestDelegate next, IConfiguration configuration)
             await next(context);
             return;
         }
+
         // Check and extract the API key if provided in the request headers
         if (!context.Request.Headers.TryGetValue(AuthConstants.ApiKeyHeaderName, out var providedApiKey))
         {
             context.Response.StatusCode = 401;
-            await context.Response.WriteAsJsonAsync("Error: Missing API Key, please provide the API key with your request.");
+            await context.Response.WriteAsJsonAsync(new
+            {
+                StatusCode = 401,
+                Error = "Missing API key.",
+                Detail = "Please include the API key in the request header 'x-api-key'."
+            });;
             return;
         }
 
@@ -27,7 +33,12 @@ public class AuthMiddleware(RequestDelegate next, IConfiguration configuration)
         if (apiKey != providedApiKey)
         {
             context.Response.StatusCode = 401;
-            await context.Response.WriteAsJsonAsync("Error: Invalid API Key, please confirm that your API key is correct.");
+            await context.Response.WriteAsJsonAsync(new
+            {
+                StatusCode = 401,
+                Error = "Invalid API key.",
+                Detail = "Please provide a valid API key in the request header 'x-api-key'."
+            });
             return;
         }
 

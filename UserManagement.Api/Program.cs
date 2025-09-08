@@ -1,7 +1,9 @@
+using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using UserManagement.Api.Authentication;
 using UserManagement.Api.Extensions;
@@ -44,6 +46,42 @@ public class Program
             rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
         });
 
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Version = "v1",
+                Title = "Info User Management API",
+                Description = "A RESTful .NET 9 API facilitating user management and log querying for Inflo tech task.",
+            });
+
+            // Configure API key authentication on Swagger documentation page
+            options.AddSecurityDefinition("API Key", new OpenApiSecurityScheme
+            {
+                Name = "x-api-key",
+                Type = SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Header,
+                Description = "Provide your API key in the request header."
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "API Key"
+                        }
+                    }, []
+                }
+            });
+
+            var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+        });
+
         builder.Services.AddHealthChecks();
 
         var app = builder.Build();
@@ -55,9 +93,11 @@ public class Program
                 dbContext.Database.Migrate();
         }
 
+        app.UseHsts();
         app.MapOpenApi();
         app.MapScalarApiReference();
-        app.UseHsts();
+        app.UseSwagger();
+        app.UseSwaggerUI();
         app.UseRateLimiter();
         app.UseHealthChecks("/");
         app.UseHttpsRedirection();

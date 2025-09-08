@@ -24,6 +24,7 @@ namespace UserManagement.Api.Controllers
         /// <param name="cancellationToken">Token to cancel the operation.</param>
         /// <returns>A list of user models.</returns>
         [ProducesResponseType(typeof(List<UserModel>), Status200OK)]
+        [ProducesResponseType(Status401Unauthorized)]
         [ProducesResponseType(Status500InternalServerError)]
         [HttpGet]
         public async Task<ActionResult<List<UserModel>>> GetUsers(
@@ -43,6 +44,7 @@ namespace UserManagement.Api.Controllers
         /// <param name="id">The ID of the user to retrieve.</param>
         /// <returns>The user matching the provided ID.</returns>
         [ProducesResponseType(typeof(UserModel), Status200OK)]
+        [ProducesResponseType(Status401Unauthorized)]
         [ProducesResponseType(Status404NotFound)]
         [ProducesResponseType(Status500InternalServerError)]
         [HttpGet("{id:long}")]
@@ -64,6 +66,7 @@ namespace UserManagement.Api.Controllers
         /// <returns>No content.</returns>
         [ProducesResponseType(Status204NoContent)]
         [ProducesResponseType(Status400BadRequest)]
+        [ProducesResponseType(Status401Unauthorized)]
         [ProducesResponseType(Status500InternalServerError)]
         [Consumes("application/json")]
         [HttpPut("{id:long}")]
@@ -85,6 +88,7 @@ namespace UserManagement.Api.Controllers
         /// <returns>The details of newly created user.</returns>
         [ProducesResponseType(typeof(UserModel), Status201Created)]
         [ProducesResponseType(Status400BadRequest)]
+        [ProducesResponseType(Status401Unauthorized)]
         [ProducesResponseType(Status500InternalServerError)]
         [Consumes("application/json")]
         [HttpPost]
@@ -100,6 +104,7 @@ namespace UserManagement.Api.Controllers
         /// <param name="id">The ID of the user to delete.</param>
         /// <returns>No content.</returns>
         [ProducesResponseType(Status204NoContent)]
+        [ProducesResponseType(Status401Unauthorized)]
         [ProducesResponseType(Status404NotFound)]
         [ProducesResponseType(Status500InternalServerError)]
         [HttpDelete("{id:long}")]

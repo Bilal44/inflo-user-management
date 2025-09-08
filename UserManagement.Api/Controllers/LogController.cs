@@ -29,6 +29,7 @@ namespace UserManagement.Api.Controllers
         /// `user_desc`, `action` and `action_desc`.</remarks>
         /// <returns>A filtered and paginated list of logs.</returns>
         [ProducesResponseType(typeof(List<LogModel>), Status200OK)]
+        [ProducesResponseType(Status401Unauthorized)]
         [ProducesResponseType(Status500InternalServerError)]
         [HttpGet]
         public async Task<IActionResult> GetLogs(
@@ -68,6 +69,7 @@ namespace UserManagement.Api.Controllers
         /// <param name="id">The id of the log entry.</param>
         /// <returns>The log entry matching the provided ID.</returns>
         [ProducesResponseType(typeof(LogModel), Status200OK)]
+        [ProducesResponseType(Status401Unauthorized)]
         [ProducesResponseType(Status404NotFound)]
         [ProducesResponseType(Status500InternalServerError)]
         [HttpGet("{id:long}")]
