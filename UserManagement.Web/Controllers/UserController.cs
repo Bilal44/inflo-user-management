@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using Hangfire;
 using UserManagement.Data.Entities;
-using UserManagement.Data.Entities.Enums;
 using UserManagement.Services.Domain.Models;
 using UserManagement.Services.Interfaces;
 using UserManagement.Services.Mapping;

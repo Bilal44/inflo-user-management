@@ -18,9 +18,14 @@ public class LogService(
     ILogger<LogService> logger) : ILogService
 {
     private const string GenericErrorMessage = "An unexpected error occurred, please try again. If the problem persists, please contact our support team.";
+    private const int DefaultPageSize = 20;
 
     public async Task<(List<Log> Logs, int TotalPages)> GetPaginatedResultsAsync(PaginationFilter filter)
     {
+        filter.CurrentPage = Math.Max(filter.CurrentPage, 1);
+        var adjustedPageSize = Math.Max((int)Math.Round(filter.PageSize / 5.0) * 5, 5);
+        filter.PageSize = Math.Min(adjustedPageSize, DefaultPageSize);
+
         try
         {
             Expression<Func<Log, bool>> predicate = _ => true;

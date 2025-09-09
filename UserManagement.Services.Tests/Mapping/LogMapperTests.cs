@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Xunit;
 using UserManagement.Data.Entities;
 using UserManagement.Data.Entities.Enums;
 using UserManagement.Services.Domain.Models;

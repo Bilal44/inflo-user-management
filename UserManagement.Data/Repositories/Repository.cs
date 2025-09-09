@@ -13,8 +13,6 @@ namespace UserManagement.Data.Repositories;
 public class Repository<TEntity>(UserManagementDbContext dbContext) : IRepository<TEntity>
     where TEntity : class
 {
-    private const int DefaultLimit = 20;
-
     public async Task<List<TEntity>> GetAllAsync(
         Expression<Func<TEntity, bool>>? predicate,
         CancellationToken cancellationToken
@@ -35,7 +33,6 @@ public class Repository<TEntity>(UserManagementDbContext dbContext) : IRepositor
         int pageSize
     )
     {
-        var limit = pageSize is not (0 and <= DefaultLimit) ? pageSize : DefaultLimit;
         var query = dbContext.Set<TEntity>().AsQueryable();
         if (predicate is not null)
             query = query.Where(predicate);
@@ -48,7 +45,7 @@ public class Repository<TEntity>(UserManagementDbContext dbContext) : IRepositor
         var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
         var queryResults = await query
             .Skip((currentPage - 1) * pageSize)
-            .Take(limit)
+            .Take(pageSize)
             .ToListAsync();
 
         return (queryResults, totalPages);

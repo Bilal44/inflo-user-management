@@ -19,13 +19,17 @@ public class LogControllerIntegrationTests : IClassFixture<TestDbFactory>
     [Fact]
     public async Task GetLogs_ShouldReturnPaginatedLogs()
     {
+        // Act
         var response = await _client.GetAsync("/api/logs");
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await response.Content.ReadFromJsonAsync<PaginatedList<LogModel>>();
         result.Should().NotBeNull();
-        result!.Data.Should().NotBeEmpty();
+        result.Data.Should().HaveCount(10);
+        result.PaginationFilter.CurrentPage.Should().Be(1);
+        result.TotalPages.Should().Be(4);
     }
 
     [Theory]
@@ -33,6 +37,7 @@ public class LogControllerIntegrationTests : IClassFixture<TestDbFactory>
     public async Task GetLogs_WithVariousFilters_ShouldReturnExpectedResults(
         string? search, long? userId, DateTime? from, DateTime? to, int page, int limit, string sort)
     {
+        // Arrange
         var query = new List<string>();
         if (search is not null) query.Add($"search={search}");
         if (userId is not null) query.Add($"userId={userId}");
@@ -42,15 +47,17 @@ public class LogControllerIntegrationTests : IClassFixture<TestDbFactory>
         query.Add($"limit={limit}");
         query.Add($"sort={sort}");
 
+        // Act
         var url = "/api/logs?" + string.Join("&", query);
         var response = await _client.GetAsync(url);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await response.Content.ReadFromJsonAsync<PaginatedList<LogModel>>();
         result.Should().NotBeNull();
 
-        if (result!.Data.Count > 0)
+        if (result.Data.Count > 0)
         {
             if (search is not null)
                 result.Data.Should()
@@ -67,31 +74,40 @@ public class LogControllerIntegrationTests : IClassFixture<TestDbFactory>
     [Fact]
     public async Task GetLogs_WithInvalidDateRange_ShouldReturnBadRequest()
     {
+        // Arrange
         var from = DateTime.UtcNow;
         var to = DateTime.UtcNow.AddDays(-1);
 
+        // Act
         var response = await _client.GetAsync($"/api/logs?from={from:o}&to={to:o}");
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task GetLogs_WithFutureFromDate_ShouldReturnBadRequest()
     {
+        // Arrange
         var future = DateTime.UtcNow.AddDays(1);
 
+        // Act
         var response = await _client.GetAsync($"/api/logs?from={future:o}");
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task GetLog_WithValidId_ShouldReturnLog()
     {
+        // Arrange
         var response = await _client.GetAsync("/api/logs/33");
 
+        // Act
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
+        // Assert
         var log = await response.Content.ReadFromJsonAsync<LogModel>();
         log.Should().NotBeNull();
         log.Id.Should().Be(33);
@@ -100,26 +116,33 @@ public class LogControllerIntegrationTests : IClassFixture<TestDbFactory>
     [Fact]
     public async Task GetLog_WithInvalidId_ShouldReturnNotFound()
     {
+        // Act
         var response = await _client.GetAsync("/api/logs/999");
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task GetLog_WithNullId_ShouldReturnNotFound()
     {
+        // Act
         var response = await _client.GetAsync("/api/logs/null");
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task GetLogs_MissingApiKey_ShouldReturnUnauthorized()
     {
+        // Arrange
         _client.DefaultRequestHeaders.Remove(AuthConstants.ApiKeyHeaderName);
 
+        // Act
         var response = await _client.GetAsync("/api/logs");
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
@@ -127,16 +150,16 @@ public class LogControllerIntegrationTests : IClassFixture<TestDbFactory>
         new List<object[]>
         {
             // Basic search and user filter
-            new object[] { "login", 1L, null, null, 1, 10, "timestamp_desc" },
+            new object[] { "tes", 1L, null, null, 1, 10, "timestamp_desc" },
 
             // Search with date range
-            new object[] { "error", 2L, DateTime.UtcNow.AddDays(-7), DateTime.UtcNow, 1, 5, "id" },
+            new object[] { "xt", 2L, DateTime.UtcNow.AddDays(-7), DateTime.UtcNow, 1, 5, "id" },
 
             // Search only
-            new object[] { "update", null, null, null, 1, 10, "user_desc" },
+            new object[] { "2", null, null, null, 1, 10, "user_desc" },
 
             // User only with date range
-            new object[] { null, 3L, DateTime.UtcNow.AddDays(-30), DateTime.UtcNow.AddDays(-1), 1, 10, "action" },
+            new object[] { null, 3L, DateTime.UtcNow.AddDays(-3000), DateTime.UtcNow.AddDays(-1), 1, 10, "action" },
 
             // No filters, default pagination
             new object[] { null, null, null, null, 1, 10, "timestamp" },

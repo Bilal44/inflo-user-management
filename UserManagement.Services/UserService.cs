@@ -9,10 +9,8 @@ using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Data.Entities.Enums;
 using UserManagement.Data.Repositories.Interfaces;
-using UserManagement.Services.Domain.Models;
 using UserManagement.Services.Exceptions;
 using UserManagement.Services.Interfaces;
-using UserManagement.Services.Mapping;
 
 namespace UserManagement.Services;
 
