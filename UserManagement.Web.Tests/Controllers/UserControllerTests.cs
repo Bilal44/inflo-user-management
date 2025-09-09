@@ -12,14 +12,13 @@ namespace UserManagement.Web.Tests.Controllers;
 public class UserControllerTests
 {
     private readonly IUserService _userService = A.Fake<IUserService>();
-    private readonly ILogService _logService = A.Fake<ILogService>();
 
     [Fact]
     public async Task List_WhenServiceReturnsUsers_ModelMustContainUsers()
     {
         // Arrange
         var users = GetUsers();
-        var controller = new UserController(_userService, _logService);
+        var controller = new UserController(_userService);
 
         // Act
         var result = await controller.List(null);

@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
+using UserManagement.Data.Entities.Enums;
 using UserManagement.Data.Repositories.Interfaces;
+using UserManagement.Services.Domain.Models;
 using UserManagement.Services.Exceptions;
 using UserManagement.Services.Interfaces;
+using UserManagement.Services.Mapping;
 
 namespace UserManagement.Services;
 
 public class UserService(
-    IRepository<User> repository,
+    IRepository<User> userRepository,
+    IRepository<Log> logRepository,
+    IBackgroundJobClient backgroundJob,
     ILogger<UserService> logger) : IUserService
 {
 
@@ -21,7 +28,7 @@ public class UserService(
     {
         try
         {
-            return await repository.GetAllAsync(cancellationToken: cancellationToken);
+            return await userRepository.GetAllAsync(cancellationToken: cancellationToken);
         }
         catch (Exception e)
         {
@@ -35,7 +42,10 @@ public class UserService(
     {
         try
         {
-            return await repository.GetByIdAsync(id);
+            var user = await userRepository.GetByIdAsync(id);
+            if (user is not null)
+                await AddLogEntry(ActionType.ViewUser, user.Id);
+            return user;
         }
         catch (Exception e)
         {
@@ -49,7 +59,7 @@ public class UserService(
     {
         try
         {
-            return await repository.GetAllAsync(u => u.IsActive == isActive, cancellationToken);
+            return await userRepository.GetAllAsync(u => u.IsActive == isActive, cancellationToken);
         }
         catch (Exception e)
         {
@@ -61,7 +71,7 @@ public class UserService(
 
     public async Task AddAsync(User user)
     {
-        var existingUser = await repository.GetAllAsync(u => u.Email == user.Email);
+        var existingUser = await userRepository.GetAllAsync(u => u.Email == user.Email);
         if (existingUser.Count > 0)
         {
             logger.LogWarning("User with id [{UserId}] already exists with this email.", existingUser[0].Id);
@@ -70,7 +80,8 @@ public class UserService(
 
         try
         {
-            await repository.CreateAsync(user);
+            await userRepository.CreateAsync(user);
+            await AddLogEntry(ActionType.AddUser, user.Id);
         }
         catch (Exception e)
         {
@@ -82,17 +93,18 @@ public class UserService(
 
     public async Task UpdateAsync(User user)
     {
-        var existingUser = await repository.GetAllAsync(u => u.Id != user.Id &&
+        var existingUser = await userRepository.GetAllAsync(u => u.Id != user.Id &&
                                                              u.Email == user.Email);
         if (existingUser.Count > 0)
         {
             logger.LogWarning("User with id [{UserId}] already exists with this email.", existingUser[0].Id);
             throw new ApiException(HttpStatusCode.Conflict, "A user already exists with this email.");
         }
-        
+
         try
         {
-            await repository.UpdateAsync(user);
+            await userRepository.UpdateAsync(user);
+            await AddLogEntry(ActionType.UpdateUser, user.Id);
         }
         catch (Exception e)
         {
@@ -106,7 +118,10 @@ public class UserService(
     {
         try
         {
-            return await repository.DeleteAsync(id);
+            var deletedCount =  await userRepository.DeleteAsync(id);
+            if (deletedCount == 1)
+                await AddLogEntry(ActionType.DeleteUser, id);
+            return deletedCount;
         }
         catch (Exception e)
         {
@@ -114,5 +129,31 @@ public class UserService(
                 "Encountered an error while deleting a user with id [{UserId}]", id);
             throw new ApiException(HttpStatusCode.InternalServerError, GenericErrorMessage);
         }
+    }
+
+    // Queue the log entry after every successful user action for asynchronous update.
+    private Task AddLogEntry(
+        ActionType actionType,
+        long userId)
+    {
+        var actions = new ReadOnlyDictionary<ActionType, string>(
+            new Dictionary<ActionType, string>
+            {
+                { ActionType.ViewUser, "Viewed" },
+                { ActionType.AddUser, "Added" },
+                { ActionType.UpdateUser, "Updated" },
+                { ActionType.DeleteUser, "Deleted" }
+            }
+        );
+
+        var log = new Log
+        {
+            UserId = userId,
+            ActionType = actionType,
+            Details = $"{actions.GetValueOrDefault(actionType)} user with id [{userId}]",
+        };
+
+        backgroundJob.Enqueue(() => logRepository.CreateAsync(log));
+        return Task.CompletedTask;
     }
 }

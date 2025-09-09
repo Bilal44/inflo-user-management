@@ -8,7 +8,7 @@ namespace UserManagement.Web.Controllers
 {
     public class LogController(ILogService logService) : Controller
     {
-        [HttpGet]
+        // Return a filtered and paginated list of log entries.
         public async Task<IActionResult> List(
             string? search,
             DateTime? from,
@@ -40,7 +40,7 @@ namespace UserManagement.Web.Controllers
             return View(LogMapper.MapToPaginatedLogModelList(filter, logs.TotalPages, logs.Logs));
         }
 
-        // GET:
+        // Return a single log entry associated with the provided id.
         public async Task<IActionResult> View(long? id)
         {
             if (id is null)

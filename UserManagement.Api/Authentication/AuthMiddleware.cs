@@ -6,8 +6,11 @@ public class AuthMiddleware(RequestDelegate next, IConfiguration configuration)
     {
         var path = context.Request.Path.Value!;
 
-        // Allow unauthenticated access to Swagger and Scalar documentation
-        if (path.StartsWith("/swagger") || path.StartsWith("/scalar") || path.StartsWith("/openapi"))
+        // Allow unauthenticated access to OpenAPI documentation and Hangfire dashboard (secured separately)
+        if (path.StartsWith("/swagger") ||
+            path.StartsWith("/scalar") ||
+            path.StartsWith("/openapi") ||
+            path.StartsWith("/hangfire"))
         {
             await next(context);
             return;

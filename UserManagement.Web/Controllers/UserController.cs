@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Hangfire;
 using UserManagement.Data.Entities;
 using UserManagement.Data.Entities.Enums;
 using UserManagement.Services.Domain.Models;
@@ -10,10 +11,9 @@ using UserManagement.Services.Mapping;
 namespace UserManagement.Web.Controllers;
 
 public class UserController(
-    IUserService userService,
-    ILogService logService) : Controller
+    IUserService userService) : Controller
 {
-    [HttpGet]
+    // Return the list of users, optionally filtered by `IsActive` status.
     public async Task<IActionResult> List(bool? active)
     {
         var users = active.HasValue
@@ -23,7 +23,7 @@ public class UserController(
         return View(UserMapper.MapToUserModelList(users));
     }
 
-    // GET:
+    // Return a single user associated with the provided id.
     public async Task<IActionResult> View(long? id)
     {
         try
@@ -41,8 +41,6 @@ public class UserController(
                 return RedirectToAction(nameof(List));
             }
 
-            await AddLogEntry(ActionType.AddUser, user.Id);
-
             return View(UserMapper.MapToUserModel(user));
         }
         catch (Exception)
@@ -52,13 +50,11 @@ public class UserController(
         }
     }
 
-    // GET: u/Create
+    // View with an empty form to create a new user.
     public IActionResult Add() =>
         View();
 
-    // POST: u/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // Create a new user after validating the user model.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(UserModel model)
@@ -70,7 +66,6 @@ public class UserController(
 
             var user = UserMapper.MapToUserEntity(model);
             await userService.AddAsync(user);
-            await AddLogEntry(ActionType.AddUser, user.Id);
             AddNotificationPanel("add", "success", user.Id, user);
             return RedirectToAction(nameof(List));
         }
@@ -81,7 +76,7 @@ public class UserController(
         }
     }
 
-    // GET: u/Edit/5
+    // View with a pre-filled form to update a current user.
     public async Task<IActionResult> Edit(long? id)
     {
         try
@@ -108,9 +103,7 @@ public class UserController(
         }
     }
 
-    // POST: u/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+    // Update an existing user after validating the user model.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(long id, UserModel model)
@@ -128,7 +121,6 @@ public class UserController(
 
             var user = UserMapper.MapToUserEntity(model);
             await userService.UpdateAsync(user);
-            await AddLogEntry(ActionType.UpdateUser, user.Id);
             AddNotificationPanel("update", "success", user.Id);
             return RedirectToAction(nameof(List));
         }
@@ -139,7 +131,7 @@ public class UserController(
         }
     }
 
-    // GET: u/Delete/5
+    // Read-only view with user details.
     public async Task<IActionResult> Delete(long? id)
     {
         try
@@ -166,7 +158,7 @@ public class UserController(
         }
     }
 
-    // POST: u/Delete/5
+    // Permanently deletes an existing user from the system.
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(long? id)
@@ -186,7 +178,6 @@ public class UserController(
                 return View();
             }
 
-            await AddLogEntry(ActionType.AddUser, id.Value);
             AddNotificationPanel("delete", "success", id.Value);
             return RedirectToAction(nameof(List));
         }
@@ -197,6 +188,7 @@ public class UserController(
         }
     }
 
+    // Display the success/failure status in a partial view on the page for a better user experience.
     private void AddNotificationPanel(
         string action,
         string status,
@@ -207,7 +199,8 @@ public class UserController(
         {
             "success" => action switch
             {
-                "add" => $"Successfully added '{user!.Forename} {user.Surname}' as a new {(user.IsActive ? "Active" : "Inactive")} user.",
+                "add" =>
+                    $"Successfully added '{user!.Forename} {user.Surname}' as a new {(user.IsActive ? "Active" : "Inactive")} user.",
                 "update" => $"Successfully updated user with id [{userId}].",
                 "delete" => $"Successfully deleted user with id [{userId}].",
                 _ => string.Empty
@@ -219,33 +212,11 @@ public class UserController(
                 _ => $"Failed to {action} user."
             },
 
-            "exception" => "An unexpected error occurred. Please try again. If the problem persists, please contact our support team.",
+            "exception" =>
+                "An unexpected error occurred. Please try again. If the problem persists, please contact our support team.",
             _ => "Unknown status."
         };
 
         TempData[status] = message;
-    }
-
-    private async Task AddLogEntry(
-        ActionType actionType,
-        long userId)
-    {
-        var actions = new ReadOnlyDictionary<ActionType, string>(
-            new Dictionary<ActionType, string>
-            {
-                { ActionType.ViewUser, "Viewed" },
-                { ActionType.AddUser, "Added" },
-                { ActionType.UpdateUser, "Updated" },
-                { ActionType.DeleteUser, "Deleted" }
-            }
-        );
-
-        var log = new LogModel
-        {
-            UserId = userId,
-            ActionType = actionType,
-            Details = $"{actions.GetValueOrDefault(actionType)} user with id [{userId}]",
-        };
-        await logService.AddAsync(LogMapper.MapToLogEntity(log));
     }
 }

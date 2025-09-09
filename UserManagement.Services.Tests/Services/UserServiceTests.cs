@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.Extensions.Logging;
 using UserManagement.Data.Entities;
 using UserManagement.Data.Repositories.Interfaces;
@@ -14,13 +15,15 @@ namespace UserManagement.Services.Tests.Services;
 
 public class UserServiceTests
 {
-    private readonly IRepository<User> _repository = A.Fake<IRepository<User>>();
+    private readonly IRepository<User> _userRepository = A.Fake<IRepository<User>>();
+    private readonly IRepository<Log> _logRepository = A.Fake<IRepository<Log>>();
+    private readonly IBackgroundJobClient _backgroundJob = A.Fake<IBackgroundJobClient>();
     private readonly ILogger<UserService> _logger = A.Fake<ILogger<UserService>>();
     private readonly UserService _service;
 
     public UserServiceTests()
     {
-        _service = new UserService(_repository, _logger);
+        _service = new UserService(_userRepository, _logRepository, _backgroundJob, _logger);
     }
 
     [Fact]
@@ -28,7 +31,7 @@ public class UserServiceTests
     {
         // Arrange
         var expectedUsers = new List<User> { new() { Id = 1, Email = "test@example.com" } };
-        A.CallTo(() => _repository.GetAllAsync(null, A<CancellationToken>._)).Returns(expectedUsers);
+        A.CallTo(() => _userRepository.GetAllAsync(null, A<CancellationToken>._)).Returns(expectedUsers);
 
         // Act
         var result = await _service.GetAllAsync(CancellationToken.None);
@@ -40,7 +43,7 @@ public class UserServiceTests
     [Fact]
     public async Task GetAllAsync_WhenExceptionThrown_ShouldLogAndThrowApiException()
     {
-        A.CallTo(() => _repository.GetAllAsync(null, A<CancellationToken>._)).Throws<Exception>();
+        A.CallTo(() => _userRepository.GetAllAsync(null, A<CancellationToken>._)).Throws<Exception>();
 
         Func<Task> act = async () => await _service.GetAllAsync(CancellationToken.None);
 
@@ -52,7 +55,7 @@ public class UserServiceTests
     public async Task GetByIdAsync_ShouldReturnUser()
     {
         var user = new User { Id = 1 };
-        A.CallTo(() => _repository.GetByIdAsync(1L)).Returns(user);
+        A.CallTo(() => _userRepository.GetByIdAsync(1L)).Returns(user);
 
         var result = await _service.GetByIdAsync(1L);
 
@@ -62,7 +65,7 @@ public class UserServiceTests
     [Fact]
     public async Task GetByIdAsync_WhenExceptionThrown_ShouldThrowApiException()
     {
-        A.CallTo(() => _repository.GetByIdAsync(1L)).Throws<Exception>();
+        A.CallTo(() => _userRepository.GetByIdAsync(1L)).Throws<Exception>();
 
         var act = () => _service.GetByIdAsync(1L);
 
@@ -74,7 +77,7 @@ public class UserServiceTests
     public async Task FilterByActiveAsync_ShouldReturnFilteredUsers()
     {
         var users = new List<User> { new() { IsActive = true } };
-        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._)).Returns(users);
+        A.CallTo(() => _userRepository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._)).Returns(users);
 
         var result = await _service.FilterByActiveAsync(true, CancellationToken.None);
 
@@ -84,7 +87,7 @@ public class UserServiceTests
     [Fact]
     public async Task FilterByActiveAsync_WhenExceptionThrown_ShouldThrowApiException()
     {
-        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._)).Throws<Exception>();
+        A.CallTo(() => _userRepository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._)).Throws<Exception>();
 
         Func<Task> act = async () => await _service.FilterByActiveAsync(true, CancellationToken.None);
 
@@ -96,13 +99,13 @@ public class UserServiceTests
     public async Task AddAsync_ShouldAddUser_WhenEmailIsUnique()
     {
         var newUser = new User { Id = 0, Email = "unique@example.com" };
-        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
+        A.CallTo(() => _userRepository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
             .Returns(new List<User>());
 
         await _service.Invoking(s => s.AddAsync(newUser))
             .Should().NotThrowAsync();
 
-        A.CallTo(() => _repository.CreateAsync(newUser)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _userRepository.CreateAsync(newUser)).MustHaveHappenedOnceExactly();
     }
 
     [Fact]
@@ -111,7 +114,7 @@ public class UserServiceTests
         var newUser = new User { Id = 0, Email = "duplicate@example.com" };
         var existingUser = new User { Id = 1, Email = "duplicate@example.com" };
 
-        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
+        A.CallTo(() => _userRepository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
             .Returns(new List<User> { existingUser });
 
         var act = () => _service.AddAsync(newUser);
@@ -119,14 +122,14 @@ public class UserServiceTests
         await act.Should().ThrowAsync<ApiException>()
             .Where(e => e.StatusCode == HttpStatusCode.Conflict);
 
-        A.CallTo(() => _repository.CreateAsync(A<User>._)).MustNotHaveHappened();
+        A.CallTo(() => _userRepository.CreateAsync(A<User>._)).MustNotHaveHappened();
     }
 
     [Fact]
     public async Task AddAsync_WhenExceptionThrown_ShouldThrowApiException()
     {
         var user = new User { Id = 1 };
-        A.CallTo(() => _repository.CreateAsync(user)).Throws<Exception>();
+        A.CallTo(() => _userRepository.CreateAsync(user)).Throws<Exception>();
 
         Func<Task> act = async () => await _service.AddAsync(user);
 
@@ -138,13 +141,13 @@ public class UserServiceTests
     public async Task UpdateAsync_ShouldUpdateUser_WhenEmailIsUnique()
     {
         var user = new User { Id = 2, Email = "unique@example.com" };
-        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
+        A.CallTo(() => _userRepository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
             .Returns(new List<User>());
 
         await _service.Invoking(s => s.UpdateAsync(user))
             .Should().NotThrowAsync();
 
-        A.CallTo(() => _repository.UpdateAsync(user)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _userRepository.UpdateAsync(user)).MustHaveHappenedOnceExactly();
     }
 
     [Fact]
@@ -153,7 +156,7 @@ public class UserServiceTests
         var user = new User { Id = 2, Email = "duplicate@example.com" };
         var otherUser = new User { Id = 1, Email = "duplicate@example.com" };
 
-        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
+        A.CallTo(() => _userRepository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
             .Returns(new List<User> { otherUser });
 
         var act = () => _service.UpdateAsync(user);
@@ -161,14 +164,14 @@ public class UserServiceTests
         await act.Should().ThrowAsync<ApiException>()
             .Where(e => e.StatusCode == HttpStatusCode.Conflict);
 
-        A.CallTo(() => _repository.UpdateAsync(A<User>._)).MustNotHaveHappened();
+        A.CallTo(() => _userRepository.UpdateAsync(A<User>._)).MustNotHaveHappened();
     }
 
     [Fact]
     public async Task UpdateAsync_WhenExceptionThrown_ShouldThrowApiException()
     {
         var user = new User { Id = 1 };
-        A.CallTo(() => _repository.UpdateAsync(user)).Throws<Exception>();
+        A.CallTo(() => _userRepository.UpdateAsync(user)).Throws<Exception>();
 
         var act = async () => await _service.UpdateAsync(user);
 
@@ -179,7 +182,7 @@ public class UserServiceTests
     [Fact]
     public async Task DeleteAsync_ShouldReturnDeleteCount()
     {
-        A.CallTo(() => _repository.DeleteAsync(1L)).Returns(1);
+        A.CallTo(() => _userRepository.DeleteAsync(1L)).Returns(1);
 
         var result = await _service.DeleteAsync(1L);
 
@@ -189,7 +192,7 @@ public class UserServiceTests
     [Fact]
     public async Task DeleteAsync_WhenExceptionThrown_ShouldThrowApiException()
     {
-        A.CallTo(() => _repository.DeleteAsync(1L)).Throws<Exception>();
+        A.CallTo(() => _userRepository.DeleteAsync(1L)).Throws<Exception>();
 
         var act = async () => await _service.DeleteAsync(1L);
 
