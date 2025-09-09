@@ -1,0 +1,167 @@
+﻿@page "/users"
+@rendermode InteractiveServer
+@inject IJSRuntime JsRuntime
+@using UserManagement.Services.Domain.Models
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+
+<PageTitle>Users List</PageTitle>
+
+<div class="container-fluid g-0 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" @onclick="GetActiveUsers" class="btn btn-primary">Active Users</button>
+            <button type="button" @onclick="GetInactiveUsers" class="btn btn-secondary">Inactive Users</button>
+            <button type="button" @onclick="GetAllUsers" class="btn btn-info">All Users</button>
+        </div>
+        <button type="button" @onclick="AddUser" class="btn btn-success">Add User</button>
+    </div>
+</div>
+
+<h3>Users List</h3>
+
+@if (_showUser && _selectedUser is not null)
+{
+    <UserModal User="_selectedUser" IsEditMode="_isEditMode" OnClose="CloseModal" OnUpdateUser="() => GetUsers(Active)" OnDeleteUser="() => DeleteUser(_selectedUser)"/>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Forename</th>
+            <th>Surname</th>
+            <th>Email</th>
+            <th>Date of Birth</th>
+            <th>Account Active</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (_users is null)
+        {
+            <tr>
+                <td colspan="6">Loading...</td>
+            </tr>
+        }
+        else if (_users?.Count == 0)
+        {
+            <tr>
+                <td colspan="6">No users found.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var user in _users!)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@user.Forename</td>
+                    <td>@user.Surname</td>
+                    <td>@user.Email</td>
+                    <td>@user.DateOfBirth</td>
+                    <td>@(user.IsActive ? "Yes" : "No")</td>
+                    <td>
+                        <div class="dropdown d-inline">
+                            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button"
+                                    id="dropdownMenuButton-@user.Id" data-bs-toggle="dropdown" aria-expanded="false">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-@user.Id">
+                                <li>
+                                    <a class="dropdown-item small" @onclick="() => UpdateUser(user.Id)">Edit</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item small" @onclick="() => ViewUser(user.Id)">GetLog</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item small" @onclick="() => DeleteUser(user)">Delete</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<UserModel>? _users;
+    private UserModel? _selectedUser;
+    private bool _showUser;
+    private bool _isEditMode;
+
+    [SupplyParameterFromQuery] private bool? Active { get; init; }
+
+    protected override async Task OnParametersSetAsync()
+        => await GetUsers(Active);
+
+    private async Task GetUsers(bool? active = null)
+    {
+        try
+        {
+            var endpoint = active.HasValue ? $"users?active={active}" : "users";
+            _users = await HttpClient.GetFromJsonAsync<List<UserModel>>(endpoint);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+        }
+    }
+
+    private void GetActiveUsers()
+    {
+        NavigationManager.NavigateTo("/users?active=true");
+    }
+
+    private void GetInactiveUsers()
+    {
+        NavigationManager.NavigateTo("/users?active=false");
+    }
+
+    private void GetAllUsers()
+    {
+        NavigationManager.NavigateTo("/users");
+    }
+
+    private void AddUser()
+    {
+        _selectedUser = new UserModel();
+        _showUser = true;
+        _isEditMode = true;
+    }
+
+    private async Task ViewUser(long userId)
+    {
+        _selectedUser = await HttpClient.GetFromJsonAsync<UserModel>($"users/{userId}");
+        _showUser = true;
+    }
+
+    private async Task UpdateUser(long userId)
+    {
+        _isEditMode = true;
+        await ViewUser(userId);
+    }
+
+    private async Task DeleteUser(UserModel user)
+    {
+        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete user {user.Forename} {user.Surname} [user ID: {user.Id}]?");
+        if (confirmed)
+        {
+            await HttpClient.DeleteAsync($"users/{user.Id}");
+            _users = await HttpClient.GetFromJsonAsync<List<UserModel>>("users");
+        }
+    }
+
+    private void CloseModal()
+    {
+        _selectedUser = null;
+        _showUser = false;
+        _isEditMode = false;
+    }
+
+}

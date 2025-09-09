@@ -1,0 +1,214 @@
+﻿@using UserManagement.Services.Domain.Models
+@inject HttpClient HttpClient
+
+<div class="modal-overlay" @onclick="Close">
+    <div class="modal-container" @onclick:stopPropagation>
+        <div class="modal-header">
+            <h5>@(IsEditMode ? "Update User" : "User Details")</h5>
+            <button class="close-button" @onclick="Close">×</button>
+        </div>
+        <EditForm Model="User" OnValidSubmit="SaveChanges">
+            @if (User is not null)
+            {
+                <div class="modal-content">
+                    @if (IsEditMode)
+                    {
+                        <DataAnnotationsValidator/>
+                        <ValidationSummary/>
+                        if (User.Id != 0)
+                        {
+                            <div class="modal-row">
+                                <label>ID:</label>
+                                <span>@User.Id</span>
+                            </div>
+                        }
+
+                        <div class="modal-row">
+                            <label>Forename:</label>
+                            <InputText class="form-control" @bind-Value="User.Forename"/>
+                        </div>
+                        <div class="modal-row">
+                            <label>Surname:</label>
+                            <InputText class="form-control" @bind-Value="User.Surname"/>
+                        </div>
+                        <div class="modal-row">
+                            <label>Email:</label>
+                            <InputText class="form-control" @bind-Value="User.Email"/>
+                        </div>
+                        <div class="modal-row">
+                            <label class="form-label">Date of Birth:</label>
+                            <InputDate class="form-control" @bind-Value="User.DateOfBirth"/>
+                        </div>
+                        <div class="modal-row">
+                            <label class="form-label">Active:</label>
+                            <InputCheckbox class="form-check-inline" @bind-Value="User.IsActive"/>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="modal-row">
+                            <span>ID:</span><span>@User.Id</span>
+                        </div>
+                        <div class="modal-row">
+                            <span>Forename:</span><span>@User.Forename</span>
+                        </div>
+                        <div class="modal-row">
+                            <span>Surname:</span><span>@User.Surname</span>
+                        </div>
+                        <div class="modal-row">
+                            <span>Email:</span><span>@User.Email</span>
+                        </div>
+                        <div class="modal-row">
+                            <span>Date of Birth:</span><span>@User.DateOfBirth</span>
+                        </div>
+                        <div class="modal-row">
+                            <span>Active:</span><span>@(User.IsActive ? "Yes" : "No")</span>
+                        </div>
+                    }
+                </div>
+            }
+
+
+            <div class="modal-footer d-flex justify-content-between w-100">
+                @if (IsEditMode)
+                {
+                    if (User?.Id == 0)
+                    {
+                        <button class="btn btn-outline-secondary modal-footer-button" type="button" @onclick="Close">Close</button>
+                        <button class="btn btn-success modal-footer-button" type="submit">Add User</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-outline-secondary modal-footer-button" type="button" @onclick="CancelEdit">Cancel Editing</button>
+                        <button class="btn btn-success modal-footer-button" type="submit">Save Changes</button>
+                    }
+                }
+                else
+                {
+                    <button class="btn btn-danger modal-footer-button" type="button" @onclick="DeleteUser">Delete User</button>
+                    <button class="btn btn-primary modal-footer-button" type="button" @onclick="EnableEditMode">Update User</button>
+                }
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public UserModel? User { get; set; }
+    [Parameter] public bool IsEditMode { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<UserModel> OnDeleteUser { get; set; }
+    [Parameter] public EventCallback OnUpdateUser { get; set; }
+
+    private async Task Close()
+    {
+        if (OnClose.HasDelegate)
+            await OnClose.InvokeAsync();
+    }
+
+    private async Task SaveChanges()
+    {
+        if (User is null)
+            return;
+
+        if (User.Id == 0)
+        {
+            await HttpClient.PostAsJsonAsync("users", User);
+        }
+        else
+        {
+            await HttpClient.PutAsJsonAsync($"users/{User.Id}", User);
+        }
+
+        if (OnUpdateUser.HasDelegate)
+            await OnUpdateUser.InvokeAsync();
+
+        await Close();
+    }
+
+    private void EnableEditMode()
+    {
+        IsEditMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        IsEditMode = false;
+    }
+
+    private async Task DeleteUser()
+    {
+        if (User is not null && OnDeleteUser.HasDelegate)
+        {
+            await OnDeleteUser.InvokeAsync(User);
+
+            if (OnUpdateUser.HasDelegate)
+                await OnUpdateUser.InvokeAsync();
+        }
+    }
+
+}
+
+@* @code { *@
+@*     [Parameter] public UserModel? User { get; set; } *@
+@*     [Parameter] public EventCallback OnClose { get; set; } *@
+@*     [Parameter] public bool IsEditMode { get; set; } = false; *@
+@*     [Parameter] public bool IsCreateMode { get; set; } = false; *@
+@*     [Parameter] public EventCallback<UserModel> OnDeleteUser { get; set; } *@
+@* *@
+@*     private async Task Close() *@
+@*     { *@
+@*         IsEditMode = false; *@
+@*         IsCreateMode = false; *@
+@*         await OnClose.InvokeAsync(); *@
+@*     } *@
+@* *@
+@*     private async Task SaveChanges() *@
+@*     { *@
+@*         if (User == null) return; *@
+@* *@
+@*         if (IsCreateMode) *@
+@*         { *@
+@*             await HttpClient.PostAsJsonAsync("users", User); *@
+@*         } *@
+@*         else *@
+@*         { *@
+@*             await HttpClient.PutAsJsonAsync($"users/{User.Id}", User); *@
+@*         } *@
+@* *@
+@*         await Close(); *@
+@*     } *@
+@* *@
+@*     private void EnableEditMode() *@
+@*     { *@
+@*         IsEditMode = true; *@
+@*     } *@
+@* *@
+@*     private void CancelEdit() *@
+@*     { *@
+@*         IsEditMode = false; *@
+@*     } *@
+@* *@
+@*     private async Task DeleteUser() *@
+@*     { *@
+@*         if (User is not null && OnDeleteUser.HasDelegate) *@
+@*         { *@
+@*             await OnDeleteUser.InvokeAsync(User); *@
+@*         } *@
+@*     } *@
+@* *@
+@*     public void InitializeNewUser() *@
+@*     { *@
+@*         User = new UserModel *@
+@*         { *@
+@*             Forename = string.Empty, *@
+@*             Surname = string.Empty, *@
+@*             Email = string.Empty, *@
+@*             DateOfBirth = DateTime.Today, *@
+@*             IsActive = true *@
+@*         }; *@
+@* *@
+@*         IsEditMode = true; *@
+@*         IsCreateMode = true; *@
+@*     } *@
+@* } *@
