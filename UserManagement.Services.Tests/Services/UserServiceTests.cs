@@ -93,12 +93,33 @@ public class UserServiceTests
     }
 
     [Fact]
-    public async Task AddAsync_ShouldCallRepository()
+    public async Task AddAsync_ShouldAddUser_WhenEmailIsUnique()
     {
-        var user = new User { Id = 1 };
-        await _service.AddAsync(user);
+        var newUser = new User { Id = 0, Email = "unique@example.com" };
+        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
+            .Returns(new List<User>());
 
-        A.CallTo(() => _repository.CreateAsync(user)).MustHaveHappened();
+        await _service.Invoking(s => s.AddAsync(newUser))
+            .Should().NotThrowAsync();
+
+        A.CallTo(() => _repository.CreateAsync(newUser)).MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task AddAsync_ShouldThrowConflict_WhenEmailAlreadyExists()
+    {
+        var newUser = new User { Id = 0, Email = "duplicate@example.com" };
+        var existingUser = new User { Id = 1, Email = "duplicate@example.com" };
+
+        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
+            .Returns(new List<User> { existingUser });
+
+        var act = () => _service.AddAsync(newUser);
+
+        await act.Should().ThrowAsync<ApiException>()
+            .Where(e => e.StatusCode == HttpStatusCode.Conflict);
+
+        A.CallTo(() => _repository.CreateAsync(A<User>._)).MustNotHaveHappened();
     }
 
     [Fact]
@@ -114,12 +135,33 @@ public class UserServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_ShouldCallRepository()
+    public async Task UpdateAsync_ShouldUpdateUser_WhenEmailIsUnique()
     {
-        var user = new User { Id = 1 };
-        await _service.UpdateAsync(user);
+        var user = new User { Id = 2, Email = "unique@example.com" };
+        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
+            .Returns(new List<User>());
 
-        A.CallTo(() => _repository.UpdateAsync(user)).MustHaveHappened();
+        await _service.Invoking(s => s.UpdateAsync(user))
+            .Should().NotThrowAsync();
+
+        A.CallTo(() => _repository.UpdateAsync(user)).MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldThrowConflict_WhenEmailBelongsToAnotherUser()
+    {
+        var user = new User { Id = 2, Email = "duplicate@example.com" };
+        var otherUser = new User { Id = 1, Email = "duplicate@example.com" };
+
+        A.CallTo(() => _repository.GetAllAsync(A<Expression<Func<User, bool>>>._, A<CancellationToken>._))
+            .Returns(new List<User> { otherUser });
+
+        var act = () => _service.UpdateAsync(user);
+
+        await act.Should().ThrowAsync<ApiException>()
+            .Where(e => e.StatusCode == HttpStatusCode.Conflict);
+
+        A.CallTo(() => _repository.UpdateAsync(A<User>._)).MustNotHaveHappened();
     }
 
     [Fact]

@@ -51,7 +51,6 @@ public class LogService(
         {
             logger.LogError(e,
                 "Encountered an error while retrieving log entries");
-
             throw new ApiException(HttpStatusCode.InternalServerError, GenericErrorMessage);
         }
     }
@@ -66,7 +65,6 @@ public class LogService(
         {
             logger.LogError(e,
                 "Encountered an error while retrieving log entry for id [{LogId}]", id);
-
             throw new ApiException(HttpStatusCode.InternalServerError, GenericErrorMessage);
         }
     }
@@ -81,7 +79,6 @@ public class LogService(
         {
             logger.LogError(e,
                 "Encountered an error while adding a new log entry for user id [{UserId}]", log.UserId);
-
             throw new ApiException(HttpStatusCode.InternalServerError, GenericErrorMessage);
         }
     }

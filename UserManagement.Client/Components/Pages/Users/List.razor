@@ -1,10 +1,10 @@
 ﻿@page "/users"
+@using UserManagement.Services.Domain.Models
 @rendermode InteractiveServer
 @inject IJSRuntime JsRuntime
-@using UserManagement.Services.Domain.Models
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
-
+@inject IToastService ToastService
 
 <PageTitle>Users List</PageTitle>
 
@@ -149,11 +149,29 @@
 
     private async Task DeleteUser(UserModel user)
     {
-        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete user {user.Forename} {user.Surname} [user ID: {user.Id}]?");
+        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete user '{user.Forename} {user.Surname}' [ID: {user.Id}]?");
         if (confirmed)
         {
-            await HttpClient.DeleteAsync($"users/{user.Id}");
-            _users = await HttpClient.GetFromJsonAsync<List<UserModel>>("users");
+            try
+            {
+                var response = await HttpClient.DeleteAsync($"users/{user.Id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    ToastService.ShowSuccess("User deleted successfully!");
+                    _users = await HttpClient.GetFromJsonAsync<List<UserModel>>("users");
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    ToastService.ShowError(string.IsNullOrWhiteSpace(errorMessage)
+                        ? $"An error occurred while deleting user '{user.Forename} {user.Surname}'."
+                        : errorMessage);
+                }
+            }
+            catch (Exception e)
+            {
+                ToastService.ShowError($"An unexpected error occurred: {e.Message}");
+            }
         }
     }
 
@@ -163,5 +181,4 @@
         _showUser = false;
         _isEditMode = false;
     }
-
 }

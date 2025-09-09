@@ -1,10 +1,15 @@
 ﻿@using UserManagement.Services.Domain.Models
 @inject HttpClient HttpClient
+@inject IToastService ToastService
 
 <div class="modal-overlay" @onclick="Close">
     <div class="modal-container" @onclick:stopPropagation>
         <div class="modal-header">
-            <h5>@(IsEditMode ? "Update User" : "User Details")</h5>
+            <h5>
+                @(IsEditMode
+                    ? User?.Id != 0 ? "Update User" : "Add User"
+                    : "User Details")
+            </h5>
             <button class="close-button" @onclick="Close">×</button>
         </div>
         <EditForm Model="User" OnValidSubmit="SaveChanges">
@@ -111,19 +116,34 @@
         if (User is null)
             return;
 
-        if (User.Id == 0)
+        try
         {
-            await HttpClient.PostAsJsonAsync("users", User);
+            var isNewUser = User.Id == 0;
+            var response = isNewUser
+                ? await HttpClient.PostAsJsonAsync("users", User)
+                : await HttpClient.PutAsJsonAsync($"users/{User.Id}", User);
+
+            if (response.IsSuccessStatusCode)
+            {
+                ToastService.ShowSuccess($"User {(isNewUser ? "added" : "updated")} successfully!");
+
+                if (OnUpdateUser.HasDelegate)
+                    await OnUpdateUser.InvokeAsync();
+
+                await Close();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                ToastService.ShowError(string.IsNullOrWhiteSpace(errorMessage)
+                    ? $"An error occurred while updating user '{User.Forename} {User.Surname}'."
+                    : errorMessage);
+            }
         }
-        else
+        catch (Exception e)
         {
-            await HttpClient.PutAsJsonAsync($"users/{User.Id}", User);
+            ToastService.ShowError($"An unexpected error occurred: {e.Message}");
         }
-
-        if (OnUpdateUser.HasDelegate)
-            await OnUpdateUser.InvokeAsync();
-
-        await Close();
     }
 
     private void EnableEditMode()
@@ -146,69 +166,4 @@
                 await OnUpdateUser.InvokeAsync();
         }
     }
-
 }
-
-@* @code { *@
-@*     [Parameter] public UserModel? User { get; set; } *@
-@*     [Parameter] public EventCallback OnClose { get; set; } *@
-@*     [Parameter] public bool IsEditMode { get; set; } = false; *@
-@*     [Parameter] public bool IsCreateMode { get; set; } = false; *@
-@*     [Parameter] public EventCallback<UserModel> OnDeleteUser { get; set; } *@
-@* *@
-@*     private async Task Close() *@
-@*     { *@
-@*         IsEditMode = false; *@
-@*         IsCreateMode = false; *@
-@*         await OnClose.InvokeAsync(); *@
-@*     } *@
-@* *@
-@*     private async Task SaveChanges() *@
-@*     { *@
-@*         if (User == null) return; *@
-@* *@
-@*         if (IsCreateMode) *@
-@*         { *@
-@*             await HttpClient.PostAsJsonAsync("users", User); *@
-@*         } *@
-@*         else *@
-@*         { *@
-@*             await HttpClient.PutAsJsonAsync($"users/{User.Id}", User); *@
-@*         } *@
-@* *@
-@*         await Close(); *@
-@*     } *@
-@* *@
-@*     private void EnableEditMode() *@
-@*     { *@
-@*         IsEditMode = true; *@
-@*     } *@
-@* *@
-@*     private void CancelEdit() *@
-@*     { *@
-@*         IsEditMode = false; *@
-@*     } *@
-@* *@
-@*     private async Task DeleteUser() *@
-@*     { *@
-@*         if (User is not null && OnDeleteUser.HasDelegate) *@
-@*         { *@
-@*             await OnDeleteUser.InvokeAsync(User); *@
-@*         } *@
-@*     } *@
-@* *@
-@*     public void InitializeNewUser() *@
-@*     { *@
-@*         User = new UserModel *@
-@*         { *@
-@*             Forename = string.Empty, *@
-@*             Surname = string.Empty, *@
-@*             Email = string.Empty, *@
-@*             DateOfBirth = DateTime.Today, *@
-@*             IsActive = true *@
-@*         }; *@
-@* *@
-@*         IsEditMode = true; *@
-@*         IsCreateMode = true; *@
-@*     } *@
-@* } *@
