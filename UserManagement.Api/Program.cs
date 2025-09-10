@@ -33,7 +33,7 @@ public class Program
                 options.LowercaseUrls = true;
                 options.LowercaseQueryStrings = true;
             })
-            .AddControllers(options => { options.Filters.Add<ApiExceptionFilter>(); })
+            .AddControllers()
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;

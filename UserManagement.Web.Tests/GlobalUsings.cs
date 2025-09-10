@@ -1,3 +1,13 @@
 global using FluentAssertions;
 global using FakeItEasy;
 global using Xunit;
+global using System;
+global using System.Collections.Generic;
+global using System.Threading.Tasks;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Mvc;
+global using UserManagement.Data.Entities;
+global using UserManagement.Services.Interfaces;
+global using UserManagement.Web.Controllers;
+global using UserManagement.Services.Domain.Models;
+global using Microsoft.AspNetCore.Mvc.ViewFeatures;

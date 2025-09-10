@@ -15,11 +15,19 @@ public class UserController(
     // Return the list of users, optionally filtered by `IsActive` status.
     public async Task<IActionResult> List(bool? active)
     {
-        var users = active.HasValue
-            ? await userService.FilterByActiveAsync(active.Value)
-            : await userService.GetAllAsync();
+        try
+        {
+            var users = active.HasValue
+                ? await userService.FilterByActiveAsync(active.Value)
+                : await userService.GetAllAsync();
 
-        return View(UserMapper.MapToUserModelList(users));
+            return View(UserMapper.MapToUserModelList(users));
+        }
+        catch (Exception)
+        {
+            AddNotificationPanel("view", "exception");
+            return RedirectToAction(nameof(List));
+        }
     }
 
     // Return a single user associated with the provided id.
@@ -70,7 +78,7 @@ public class UserController(
         }
         catch (ApiException e) when (e.StatusCode == HttpStatusCode.Conflict)
         {
-            AddNotificationPanel("add", "error", model.Id);
+            AddNotificationPanel("add", "error", model.Id, new User());
             return View(model);
         }
         catch (Exception)
@@ -130,7 +138,7 @@ public class UserController(
         }
         catch (ApiException e) when (e.StatusCode == HttpStatusCode.Conflict)
         {
-            AddNotificationPanel("update", "error", model.Id);
+            AddNotificationPanel("update", "error", model.Id, new User());
             return View(model);
         }
         catch (Exception)
@@ -201,7 +209,7 @@ public class UserController(
     private void AddNotificationPanel(
         string action,
         string status,
-        long? userId,
+        long? userId = null,
         User? user = null)
     {
         var message = status switch
@@ -218,15 +226,20 @@ public class UserController(
             "error" => action switch
             {
                 "view" => $"Failed to find a user with id [{userId}].",
-                "add" or "update" => "A user with this email address already exists.",
+                "add" or "update" when user is not null => "A user with this email address already exists.",
                 _ => $"Failed to {action} user."
             },
 
             "exception" =>
                 "An unexpected error occurred. Please try again. If the problem persists, please contact our support team.",
-            _ => "Unknown status."
+            _ => "Unknown error."
         };
 
-        TempData[status] = message;
+        if (status is "error" or "exception")
+            TempData["error"] = message;
+        else if (status is "success")
+            TempData["success"] = message;
+        else
+            TempData["warning"] = message;
     }
 }

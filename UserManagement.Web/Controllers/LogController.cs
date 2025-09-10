@@ -19,38 +19,56 @@ namespace UserManagement.Web.Controllers
             string sort = "timestamp_desc"
         )
         {
-            if (from > to)
-                TempData["error"] = "The `<b>from</b> timestamp should not be after <b>to</b> timestamp.";
-
-            if (from.HasValue && DateTime.UtcNow < from)
-                TempData["warning"] = "The <b>from</b> timestamp is in the future, it may cause no data to return.";
-
-            var filter = new PaginationFilter
+            try
             {
-                UserId = userId,
-                Search = search,
-                From = from,
-                To = to,
-                CurrentPage = page,
-                PageSize = limit,
-                SortBy = sort
-            };
-            var logs = await logService.GetPaginatedResultsAsync(filter);
+                if (from > to)
+                    TempData["error"] = "The <b>from</b> timestamp should not be after <b>to</b> timestamp.";
 
-            return View(LogMapper.MapToPaginatedLogModelList(filter, logs.TotalPages, logs.Logs));
+                if (from.HasValue && DateTime.UtcNow < from)
+                    TempData["warning"] = "The <b>from</b> timestamp is in the future, it may cause no data to return.";
+
+                var filter = new PaginationFilter
+                {
+                    UserId = userId,
+                    Search = search,
+                    From = from,
+                    To = to,
+                    CurrentPage = page,
+                    PageSize = limit,
+                    SortBy = sort
+                };
+                var logs = await logService.GetPaginatedResultsAsync(filter);
+
+                return View(LogMapper.MapToPaginatedLogModelList(filter, logs.TotalPages, logs.Logs));
+            }
+            catch (Exception)
+            {
+                TempData["error"] =
+                    "An unexpected error occurred. Please try again. If the problem persists, please contact our support team.";
+                return RedirectToAction(nameof(List));
+            }
         }
 
         // Return a single log entry associated with the provided id.
         public async Task<IActionResult> View(long? id)
         {
-            if (id is null)
-                return NotFound();
+            try
+            {
+                if (id is null)
+                    return NotFound();
 
-            var log = await logService.GetByIdAsync(id.Value);
-            if (log is null)
-                return NotFound();
+                var log = await logService.GetByIdAsync(id.Value);
+                if (log is null)
+                    return NotFound();
 
-            return View(LogMapper.MapToLogModel(log));
+                return View(LogMapper.MapToLogModel(log));
+            }
+            catch (Exception)
+            {
+                TempData["error"] =
+                    "An unexpected error occurred. Please try again. If the problem persists, please contact our support team.";
+                return RedirectToAction(nameof(List));
+            }
         }
     }
 }

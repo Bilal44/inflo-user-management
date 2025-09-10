@@ -10,7 +10,8 @@ namespace UserManagement.Data.Extensions;
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddDataAccess(this IServiceCollection services, IConfiguration configuration)
-        => services.AddDbContext<UserManagementDbContext>(options =>
+        => services.
+            AddDbContext<UserManagementDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("UserManagementDb")))
-                .AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            .AddScoped(typeof(IRepository<>), typeof(Repository<>));
 }
