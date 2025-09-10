@@ -1,3 +1,4 @@
+using System.Globalization;
 using Hangfire;
 using Hangfire.Dashboard.BasicAuthorization;
 using Microsoft.AspNetCore.Builder;
@@ -42,7 +43,7 @@ var options = new DashboardOptions
             SslRedirect = false,
             RequireSsl = false,
             LoginCaseSensitive = true,
-            Users = new []
+            Users = new[]
             {
                 new BasicAuthAuthorizationUser
                 {
@@ -54,13 +55,17 @@ var options = new DashboardOptions
     }
 };
 
+// Add culture info for machine-agnostic deployments
+var cultureInfo = new CultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
 app.UseMarkdown();
 app.UseHangfireDashboard(options: options);
 app.UseHsts();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthorization();
 app.MapHangfireDashboard();
 app.MapDefaultControllerRoute();
 app.Run();

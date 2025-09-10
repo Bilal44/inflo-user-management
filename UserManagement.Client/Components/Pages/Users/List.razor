@@ -64,20 +64,19 @@
                     <td>@user.DateOfBirth</td>
                     <td>@(user.IsActive ? "Yes" : "No")</td>
                     <td>
-                        <div class="dropdown d-inline">
-                            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button"
-                                    id="dropdownMenuButton-@user.Id" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
                                 Actions
                             </button>
-                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-@user.Id">
+                            <ul class="dropdown-menu" aria-labelledby="btnToggleActions">
                                 <li>
-                                    <a class="dropdown-item small" @onclick="() => UpdateUser(user.Id)">Edit</a>
+                                    <a class="dropdown-item" @onclick="() => ViewUser(user.Id)">View</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item small" @onclick="() => ViewUser(user.Id)">GetLog</a>
+                                    <a class="dropdown-item" @onclick="() => UpdateUser(user.Id)">Edit</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item small" @onclick="() => DeleteUser(user)">Delete</a>
+                                    <a class="dropdown-item" @onclick="() => DeleteUser(user)">Delete</a>
                                 </li>
                             </ul>
                         </div>

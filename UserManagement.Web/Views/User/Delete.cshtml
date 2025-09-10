@@ -1,53 +1,65 @@
 @model UserManagement.Services.Domain.Models.UserModel
 
 @{
-    ViewData["Title"] = "Delete User";
+ViewData["Title"] = "Delete User";
 }
 
-<partial name="_StatusMessage" />
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <partial name="_StatusMessage" />
+            <div class="card shadow-sm border-danger">
+                <div class="card-body">
+                    <h2 class="text-center text-danger mb-4">Delete User</h2>
 
-<h1>Delete</h1>
+                    <p class="text-center fs-5 mb-3">Are you sure you want to delete <b>@Model.Forename @Model.Surname?</b></p>
 
-<h3>Are you sure you want to delete this user?</h3>
-<div>
-    <h4>User</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Forename)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Forename)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Surname)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Surname)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Email)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateOfBirth)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateOfBirth)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsActive)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsActive)
-        </dd>
-    </dl>
+                    <dl class="row">
+                        <dt class="col-sm-4 text-end fw-bold">
+                            @Html.DisplayNameFor(model => model.Forename)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.Forename)
+                        </dd>
 
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="@Model.Id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="List">Back to List</a>
-    </form>
+                        <dt class="col-sm-4 text-end fw-bold">
+                            @Html.DisplayNameFor(model => model.Surname)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.Surname)
+                        </dd>
+
+                        <dt class="col-sm-4 text-end fw-bold">
+                            @Html.DisplayNameFor(model => model.Email)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.Email)
+                        </dd>
+
+                        <dt class="col-sm-4 text-end fw-bold">
+                            @Html.DisplayNameFor(model => model.DateOfBirth)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.DateOfBirth)
+                        </dd>
+
+                        <dt class="col-sm-4 text-end fw-bold">
+                            @Html.DisplayNameFor(model => model.IsActive)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.IsActive)
+                        </dd>
+                    </dl>
+
+                    <form asp-action="Delete" class="mt-4">
+                        <input type="hidden" asp-for="Id" />
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg">Delete</button>
+                            <a asp-action="List" class="btn btn-outline-secondary">Back to List</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

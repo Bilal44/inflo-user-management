@@ -4,48 +4,57 @@
     ViewData["Title"] = "View Log Details";
 }
 
-<partial name="_StatusMessage" />
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="text-center mb-4">Log Details</h2>
 
-<h1>View Log Details</h1>
+                    <dl class="row">
+                        <dt class="col-sm-4 fw-bold">
+                            @Html.DisplayNameFor(model => model.Id)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.Id)
+                        </dd>
 
-<div>
-    <h4>Log</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Id)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Id)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.UserId)
-        </dt>
-        <dd class="col-sm-10">
-            <a asp-controller="User" asp-action="View" asp-route-id="@Model.UserId">
-                @Html.DisplayFor(model => model.UserId)
-            </a>
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Timestamp)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Timestamp)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.ActionType)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.ActionType)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Details)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Details)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="List">Back to List</a>
+                        <dt class="col-sm-4 fw-bold">
+                            @Html.DisplayNameFor(model => model.UserId)
+                        </dt>
+                        <dd class="col-sm-8">
+                            <a asp-controller="User" asp-action="View" asp-route-id="@Model.UserId">
+                                @Html.DisplayFor(model => model.UserId)
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-4 fw-bold">
+                            @Html.DisplayNameFor(model => model.Timestamp)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.Timestamp)
+                        </dd>
+
+                        <dt class="col-sm-4 fw-bold">
+                            @Html.DisplayNameFor(model => model.ActionType)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.ActionType)
+                        </dd>
+
+                        <dt class="col-sm-4 fw-bold">
+                            @Html.DisplayNameFor(model => model.Details)
+                        </dt>
+                        <dd class="col-sm-8">
+                            @Html.DisplayFor(model => model.Details)
+                        </dd>
+                    </dl>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <a asp-action="List" class="btn btn-outline-secondary">Back to List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

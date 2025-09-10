@@ -4,7 +4,7 @@
     ViewData["Title"] = "Home";
 }
 
-@await Markdown.ParseHtmlStringFromFileAsync("../../README.md")
+@await Markdown.ParseHtmlStringFromFileAsync("README.md")
 
 <p>
     <a asp-controller="User" asp-action="List" class="btn btn-primary">To User List</a>

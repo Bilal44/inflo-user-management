@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -63,7 +64,7 @@ public class Program
                     SslRedirect = false,
                     RequireSsl = false,
                     LoginCaseSensitive = true,
-                    Users = new []
+                    Users = new[]
                     {
                         new BasicAuthAuthorizationUser
                         {
@@ -77,33 +78,33 @@ public class Program
 
         builder.Services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo
-            {
-                Version = "v1",
-                Title = "Info User Management API",
-                Description = "A RESTful .NET 9 API facilitating user management and log querying for Inflo tech task.",
-            });
+            options.SwaggerDoc("v1",
+                new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "Inflo User Management API",
+                    Description =
+                        "A RESTful .NET 9 API facilitating user management and log querying for Inflo tech task.",
+                });
 
             // Configure API key authentication on Swagger documentation page
-            options.AddSecurityDefinition("API Key", new OpenApiSecurityScheme
-            {
-                Name = "x-api-key",
-                Type = SecuritySchemeType.ApiKey,
-                In = ParameterLocation.Header,
-                Description = "Provide your API key in the request header."
-            });
+            options.AddSecurityDefinition("API Key",
+                new OpenApiSecurityScheme
+                {
+                    Name = "x-api-key",
+                    Type = SecuritySchemeType.ApiKey,
+                    In = ParameterLocation.Header,
+                    Description = "Provide your API key in the request header."
+                });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
                     new OpenApiSecurityScheme
                     {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "API Key"
-                        }
-                    }, []
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "API Key" }
+                    },
+                    []
                 }
             });
 
@@ -121,6 +122,11 @@ public class Program
             if (dbContext.Database.IsSqlServer())
                 dbContext.Database.Migrate();
         }
+
+        // Add culture info for machine-agnostic deployments
+        var cultureInfo = new CultureInfo("en-GB");
+        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
         app.UseHsts();
         app.MapOpenApi();

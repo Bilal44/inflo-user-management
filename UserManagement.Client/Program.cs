@@ -1,3 +1,4 @@
+using System.Globalization;
 using Blazored.Toast;
 using UserManagement.Client.Components;
 
@@ -21,6 +22,11 @@ builder.Services
     });
 
 var app = builder.Build();
+
+// Add culture info for machine-agnostic deployments
+var cultureInfo = new CultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler("/Error", createScopeForErrors: true);

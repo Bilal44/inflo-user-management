@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using UserManagement.Services.Domain.Models;
 using UserManagement.Services.Filters;
 using UserManagement.Services.Interfaces;
@@ -11,6 +12,7 @@ namespace UserManagement.Api.Controllers
     [Produces(MediaTypeNames.Application.Json)]
     [Route("api/logs")]
     [ServiceFilter(typeof(ApiExceptionFilter))]
+    [EnableRateLimiting("sliding")]
     [ApiController]
     public class LogController(ILogService logService) : ControllerBase
     {

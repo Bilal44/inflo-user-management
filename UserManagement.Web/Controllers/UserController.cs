@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 using UserManagement.Data.Entities;
 using UserManagement.Services.Domain.Models;
+using UserManagement.Services.Exceptions;
 using UserManagement.Services.Interfaces;
 using UserManagement.Services.Mapping;
 
@@ -66,6 +68,11 @@ public class UserController(
             AddNotificationPanel("add", "success", user.Id, user);
             return RedirectToAction(nameof(List));
         }
+        catch (ApiException e) when (e.StatusCode == HttpStatusCode.Conflict)
+        {
+            AddNotificationPanel("add", "error", model.Id);
+            return View(model);
+        }
         catch (Exception)
         {
             AddNotificationPanel("add", "exception", model.Id);
@@ -118,8 +125,13 @@ public class UserController(
 
             var user = UserMapper.MapToUserEntity(model);
             await userService.UpdateAsync(user);
-            AddNotificationPanel("update", "success", user.Id);
+            AddNotificationPanel("update", "success", user.Id, user);
             return RedirectToAction(nameof(List));
+        }
+        catch (ApiException e) when (e.StatusCode == HttpStatusCode.Conflict)
+        {
+            AddNotificationPanel("update", "error", model.Id);
+            return View(model);
         }
         catch (Exception)
         {
@@ -197,8 +209,8 @@ public class UserController(
             "success" => action switch
             {
                 "add" =>
-                    $"Successfully added '{user!.Forename} {user.Surname}' as a new {(user.IsActive ? "Active" : "Inactive")} user.",
-                "update" => $"Successfully updated user with id [{userId}].",
+                    $"Successfully added <b>{user!.Forename} {user.Surname}</b> as a new <b>{(user.IsActive ? "Active" : "Inactive")}</b> user.",
+                "update" => $"Successfully updated user details for <b>{user!.Forename} {user.Surname}</b>.",
                 "delete" => $"Successfully deleted user with id [{userId}].",
                 _ => string.Empty
             },
@@ -206,6 +218,7 @@ public class UserController(
             "error" => action switch
             {
                 "view" => $"Failed to find a user with id [{userId}].",
+                "add" or "update" => "A user with this email address already exists.",
                 _ => $"Failed to {action} user."
             },
 
