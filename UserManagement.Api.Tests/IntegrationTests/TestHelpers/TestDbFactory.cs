@@ -27,7 +27,7 @@ public class TestDbFactory : WebApplicationFactory<Program>
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((context, configBuilder) =>
+        builder.ConfigureAppConfiguration(configBuilder =>
         {
             var testSettings = new Dictionary<string, string>
             {
