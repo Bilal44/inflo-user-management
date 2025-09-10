@@ -1,0 +1,137 @@
+name: Build, Test & Deploy All User Management Projects on Azure
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  CONFIGURATION: Release
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+
+  test:
+    name: Run All Tests
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration ${{ env.CONFIGURATION }}
+
+    - name: Run Tests
+      run: dotnet test --no-build --verbosity normal
+
+  deploy-api:
+    name: Deploy REST API
+    runs-on: windows-latest
+    needs: test
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AZURE_WEBAPP_NAME: inflo-api
+      PROJECT_PATH: UserManagement.Api
+      PACKAGE_PATH: api-publish
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Publish API
+      run: dotnet publish ${{ env.PROJECT_PATH }} --configuration ${{ env.CONFIGURATION }} --output ${{ env.PACKAGE_PATH }}
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7806995622404F4A8F8E518C20521102 }}
+        tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_EA39F55E6BB14C6DA7B4C281E0C4576B }}
+        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3AB9CD2AF76A4BAFA7F1AC0FCD8F772A }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ env.PACKAGE_PATH }}
+
+  deploy-blazor:
+    name: Deploy Blazor Web App
+    runs-on: windows-latest
+    needs: test
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AZURE_WEBAPP_NAME: inflo-blazor
+      PROJECT_PATH: UserManagement.Client
+      PACKAGE_PATH: client-publish
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Publish Client
+      run: dotnet publish ${{ env.PROJECT_PATH }} --configuration ${{ env.CONFIGURATION }} --output ${{ env.PACKAGE_PATH }}
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_367D65DAC0494E498245E67DDF7A74CE }}
+        tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0DFF1DF2EF5845B98D44FA7B271E2047 }}
+        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EA1F6B3595C44779B7E4CE581569FB02 }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ env.PACKAGE_PATH }}
+
+  deploy-web:
+    name: Deploy ASP.NET Core Website
+    runs-on: windows-latest
+    needs: test
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AZURE_WEBAPP_NAME: inflo-web
+      PROJECT_PATH: UserManagement.Web
+      PACKAGE_PATH: web-publish
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Publish Web
+      run: dotnet publish ${{ env.PROJECT_PATH }} --configuration ${{ env.CONFIGURATION }} --output ${{ env.PACKAGE_PATH }}
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_273F601A876247C5840AEA890F900311 }}
+        tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_063C4961ED834763A406E70BED57B944 }}
+        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_8FB472BDBF424E4192A96D161977F0CF }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ env.PACKAGE_PATH }}
