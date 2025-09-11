@@ -28,8 +28,10 @@ namespace UserManagement.Api.Controllers
         /// <param name="sort">The sorting method applied on the return logs.</param>
         /// <remarks>The default sorting is `timestamp_desc`, which returns logs in descending
         /// timestamp order. Other available methods are `timestamp`, `id`, `id_desc`, `user`,
-        /// `user_desc`, `action` and `action_desc`.</remarks>
-        /// <returns>A filtered and paginated list of logs.</returns>
+        /// `user_desc`, `action` and `action_desc`.
+        /// The limit (or page size) is always a multiple of 5. Values not divisible by 5 will
+        /// be rounded to the nearest multiple. Valid limits are: 5, 10, 15, and 20 (max).</remarks>
+        /// <returns>A sorted, filtered and paginated list of logs.</returns>
         [ProducesResponseType(typeof(List<LogModel>), Status200OK)]
         [ProducesResponseType(Status401Unauthorized)]
         [ProducesResponseType(Status500InternalServerError)]
