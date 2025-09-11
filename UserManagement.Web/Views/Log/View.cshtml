@@ -16,7 +16,9 @@
                             @Html.DisplayNameFor(model => model.Id)
                         </dt>
                         <dd class="col-sm-8">
-                            @Html.DisplayFor(model => model.Id)
+                            <a asp-controller="Log" asp-action="View" asp-route-id="@Model.Id">
+                                @Html.DisplayFor(model => model.Id)
+                            </a>
                         </dd>
 
                         <dt class="col-sm-4 fw-bold">

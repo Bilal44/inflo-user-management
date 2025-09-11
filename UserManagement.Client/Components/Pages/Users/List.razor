@@ -8,84 +8,91 @@
 
 <PageTitle>Users List</PageTitle>
 
-<div class="container-fluid g-0 mb-4">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="d-flex flex-wrap gap-2">
-            <button type="button" @onclick="GetActiveUsers" class="btn btn-primary">Active Users</button>
-            <button type="button" @onclick="GetInactiveUsers" class="btn btn-secondary">Inactive Users</button>
-            <button type="button" @onclick="GetAllUsers" class="btn btn-info">All Users</button>
-        </div>
-        <button type="button" @onclick="AddUser" class="btn btn-success">Add User</button>
-    </div>
-</div>
-
-<h3>Users List</h3>
-
 @if (_showUser && _selectedUser is not null)
 {
     <UserModal User="_selectedUser" IsEditMode="_isEditMode" OnClose="CloseModal" OnUpdateUser="() => GetUsers(Active)" OnDeleteUser="() => DeleteUser(_selectedUser)"/>
 }
 
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-        <tr>
-            <th>Id</th>
-            <th>Forename</th>
-            <th>Surname</th>
-            <th>Email</th>
-            <th>Date of Birth</th>
-            <th>Account Active</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        @if (_users is null)
-        {
-            <tr>
-                <td colspan="6">Loading...</td>
-            </tr>
-        }
-        else if (_users?.Count == 0)
-        {
-            <tr>
-                <td colspan="6">No users found.</td>
-            </tr>
-        }
-        else
-        {
-            @foreach (var user in _users!)
-            {
-                <tr>
-                    <td>@user.Id</td>
-                    <td>@user.Forename</td>
-                    <td>@user.Surname</td>
-                    <td>@user.Email</td>
-                    <td>@user.DateOfBirth</td>
-                    <td>@(user.IsActive ? "Yes" : "No")</td>
-                    <td>
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
-                                Actions
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="btnToggleActions">
-                                <li>
-                                    <a class="dropdown-item" @onclick="() => ViewUser(user.Id)">View</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" @onclick="() => UpdateUser(user.Id)">Edit</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" @onclick="() => DeleteUser(user)">Delete</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
-            }
-        }
-        </tbody>
-    </table>
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <h2 class="text-center mb-4">Users List</h2>
+
+            <div class="container-fluid g-0 mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" @onclick="GetActiveUsers" class="btn btn-primary">Active Users</button>
+                        <button type="button" @onclick="GetInactiveUsers" class="btn btn-secondary">Inactive Users</button>
+                        <button type="button" @onclick="GetAllUsers" class="btn btn-info">All Users</button>
+                    </div>
+                    <button type="button" @onclick="AddUser" class="btn btn-success">Add User</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Forename</th>
+                        <th>Surname</th>
+                        <th>Email</th>
+                        <th>Date of Birth</th>
+                        <th>Account Active</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @if (_users is null)
+                    {
+                        <tr>
+                            <td colspan="6">Loading...</td>
+                        </tr>
+                    }
+                    else if (_users?.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6">No users found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in _users!)
+                        {
+                            <tr>
+                                <td>@user.Id</td>
+                                <td>@user.Forename</td>
+                                <td>@user.Surname</td>
+                                <td>@user.Email</td>
+                                <td>@user.DateOfBirth</td>
+                                <td>@(user.IsActive ? "Yes" : "No")</td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="btnToggleActions">
+                                            <li>
+                                                <a class="dropdown-item" @onclick="() => ViewUser(user.Id)">View</a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" @onclick="() => UpdateUser(user.Id)">Edit</a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" @onclick="() => DeleteUser(user)">Delete</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -180,4 +187,5 @@
         _showUser = false;
         _isEditMode = false;
     }
+
 }

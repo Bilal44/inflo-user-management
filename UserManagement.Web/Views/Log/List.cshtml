@@ -2,14 +2,7 @@
 
 @{
     ViewData["Title"] = "Log List";
-}
 
-<partial name="_StatusMessage"/>
-
-<h2>Log List</h2>
-
-<!-- Search Form -->
-@{
     var filter = Model.PaginationFilter;
     var filterValues = new Dictionary<string, string>
     {
@@ -20,198 +13,254 @@
         { "userid", filter.UserId?.ToString() ?? string.Empty },
         { "limit", filter.PageSize.ToString() }
     };
-    <form method="get" asp-action="List" class="mb-3">
-        @if (!string.IsNullOrWhiteSpace(filterValues.GetValueOrDefault("sort")))
-        {
-            <input type="hidden" name="sort" value="@Model.PaginationFilter.SortBy"/>
-        }
-        @if (!string.IsNullOrWhiteSpace(filterValues.GetValueOrDefault("userid")))
-        {
-            <input type="hidden" name="userid" value="@Model.PaginationFilter.UserId"/>
-        }
-        @if (!string.IsNullOrWhiteSpace(filterValues.GetValueOrDefault("limit")))
-        {
-            <input type="hidden" name="limit" value="@Model.PaginationFilter.PageSize"/>
-        }
-        <div class="input-group">
-            <input type="text" name="search" value="@Model.PaginationFilter.Search" class="form-control" placeholder="Search details..."/>
-            <input type="datetime-local" name="from" value="@Model.PaginationFilter.From?.ToString("yyyy-MM-ddTHH:mm")" class="form-control" title="From"/>
-            <input type="datetime-local" name="to" value="@Model.PaginationFilter.To?.ToString("yyyy-MM-ddTHH:mm")" class="form-control" title="To"/>
-            <button type="submit" class="btn btn-lg btn-primary">Search</button>
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <partial name="_StatusMessage"/>
+
+            <h2 class="text-center mb-4">Log List</h2>
+
+            <!-- Search Form -->
+            <form method="get" asp-action="List" class="mb-3">
+                @if (!string.IsNullOrWhiteSpace(filterValues.GetValueOrDefault("sort")))
+                {
+                    <input type="hidden" name="sort" value="@Model.PaginationFilter.SortBy"/>
+                }
+                @if (!string.IsNullOrWhiteSpace(filterValues.GetValueOrDefault("userid")))
+                {
+                    <input type="hidden" name="userid" value="@Model.PaginationFilter.UserId"/>
+                }
+                @if (!string.IsNullOrWhiteSpace(filterValues.GetValueOrDefault("limit")))
+                {
+                    <input type="hidden" name="limit" value="@Model.PaginationFilter.PageSize"/>
+                }
+                <div class="input-group">
+                    <input type="text" name="search" value="@Model.PaginationFilter.Search" class="form-control" placeholder="Search details..."/>
+                    <input type="datetime-local" name="from" value="@Model.PaginationFilter.From?.ToString("yyyy-MM-ddTHH:mm")" class="form-control" title="From"/>
+                    <input type="datetime-local" name="to" value="@Model.PaginationFilter.To?.ToString("yyyy-MM-ddTHH:mm")" class="form-control" title="To"/>
+                    <button type="submit" class="btn btn-lg btn-success">Search</button>
+                </div>
+            </form>
+
+            <!-- Log Data -->
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>
+                            <a
+                                asp-action="List"
+                                asp-route-sort="@(Model.PaginationFilter.SortBy == "id_desc" ? "id" : "id_desc")"
+                                asp-route-search="@Model.PaginationFilter.Search"
+                                asp-route-userId="@Model.PaginationFilter.UserId"
+                                asp-route-limit="@Model.PaginationFilter.PageSize"
+                                asp-route-from="@Model.PaginationFilter.From"
+                                asp-route-to="@Model.PaginationFilter.To">
+                                Id
+                                @switch (Model.PaginationFilter.SortBy)
+                                {
+                                    case "id":
+                                    <i class="bi bi-arrow-up"></i>
+                                    break;
+
+                                    case "id_desc":
+                                    <i class="bi bi-arrow-down"></i>
+                                    break;
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a
+                                asp-action="List"
+                                asp-route-sort="@(Model.PaginationFilter.SortBy == "user_desc" ? "user" : "user_desc")"
+                                asp-route-search="@Model.PaginationFilter.Search"
+                                asp-route-userId="@Model.PaginationFilter.UserId"
+                                asp-route-limit="@Model.PaginationFilter.PageSize"
+                                asp-route-from="@Model.PaginationFilter.From"
+                                asp-route-to="@Model.PaginationFilter.To">
+                                User Id
+                                @switch (Model.PaginationFilter.SortBy)
+                                {
+                                    case "user":
+                                    <i class="bi bi-arrow-up"></i>
+                                    break;
+
+                                    case "user_desc":
+                                    <i class="bi bi-arrow-down"></i>
+                                    break;
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a
+                                asp-action="List"
+                                asp-route-sort="@(Model.PaginationFilter.SortBy == "timestamp_desc" ? "timestamp" : "timestamp_desc")"
+                                asp-route-search="@Model.PaginationFilter.Search"
+                                asp-route-userId="@Model.PaginationFilter.UserId"
+                                asp-route-limit="@Model.PaginationFilter.PageSize"
+                                asp-route-from="@Model.PaginationFilter.From"
+                                asp-route-to="@Model.PaginationFilter.To">
+                                Timestamp (UTC)
+                                @switch (Model.PaginationFilter.SortBy)
+                                {
+                                    case "timestamp":
+                                    <i class="bi bi-arrow-up"></i>
+                                    break;
+
+                                    case "timestamp_desc":
+                                    <i class="bi bi-arrow-down"></i>
+                                    break;
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a
+                                asp-action="List"
+                                asp-route-sort="@(Model.PaginationFilter.SortBy == "action_desc" ? "action" : "action_desc")"
+                                asp-route-search="@Model.PaginationFilter.Search"
+                                asp-route-userId="@Model.PaginationFilter.UserId"
+                                asp-route-limit="@Model.PaginationFilter.PageSize"
+                                asp-route-from="@Model.PaginationFilter.From"
+                                asp-route-to="@Model.PaginationFilter.To">
+                                Action Type
+                                @switch (Model.PaginationFilter.SortBy)
+                                {
+                                    case "action":
+                                    <i class="bi bi-arrow-up"></i>
+                                    break;
+
+                                    case "action_desc":
+                                    <i class="bi bi-arrow-down"></i>
+                                    break;
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            Details
+                        </th>
+                        <th style="width: 1px;"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Data)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>
+                                <a asp-controller="User" asp-action="View" asp-route-id="@item.UserId">
+                                    @item.UserId
+                                </a>
+                            </td>
+                            <td>@item.Timestamp</td>
+                            <td>@item.ActionType</td>
+                            <td>@item.Details</td>
+                            <td class="text-center">
+                                <a class="btn btn-outline-info" asp-controller="Log" asp-action="View" asp-route-id="@item.Id">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination + Page Size Container -->
+            <div class="d-flex justify-content-center align-items-center mb-3 position-relative">
+
+                <!-- Centered Pagination Buttons -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        @if (filter.CurrentPage > 1)
+                        {
+                            var firstPageRoute = new Dictionary<string, string>(filterValues)
+                            {
+                                { "page", "1" }
+                            };
+                            <li class="page-item">
+                                <a class="page-link"
+                                   asp-route-page="1"
+                                   asp-all-route-data="firstPageRoute">
+                                    First
+                                </a>
+                            </li>
+                            var route = new Dictionary<string, string>(filterValues)
+                            {
+                                { "page", (filter.CurrentPage - 1).ToString() }
+                            };
+                            <li class="page-item">
+                                <a class="page-link" asp-all-route-data="route">Previous</a>
+                            </li>
+                        }
+
+                        @{
+                            var start = Math.Max(1, filter.CurrentPage - 5);
+                            var end = Math.Min(Model.TotalPages, filter.CurrentPage + 5);
+                        }
+
+                        @for (int i = start; i <= end; i++)
+                        {
+                            var routeValues = new Dictionary<string, string>(filterValues)
+                            {
+                                { "page", i.ToString() }
+                            };
+
+                            <li class="page-item @(i == filter.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-all-route-data="routeValues">@i</a>
+                            </li>
+                        }
+
+                        @if (filter.CurrentPage < Model.TotalPages)
+                        {
+                            var nextPageRoute = new Dictionary<string, string>(filterValues)
+                            {
+                                { "page", (filter.CurrentPage + 1).ToString() }
+                            };
+                            var lastPageRoute = new Dictionary<string, string>(filterValues)
+                            {
+                                { "page", Model.TotalPages.ToString() }
+                            };
+
+                            <li class="page-item">
+                                <a class="page-link" asp-all-route-data="nextPageRoute">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" asp-all-route-data="lastPageRoute">Last</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+
+                <!-- Page Size Dropdown (absolutely positioned to the right) -->
+                <form method="get" asp-action="List" class="position-absolute end-0">
+                    <select id="limit" name="limit" class="form-select w-auto" onchange="this.form.submit()">
+                        @foreach (var size in new[] { 5, 10, 15, 20 })
+                        {
+                            if (size == Model.PaginationFilter.PageSize)
+                            {
+                                <option value="@size" selected>@size</option>
+                            }
+                            else
+                            {
+                                <option value="@size">@size</option>
+                            }
+                        }
+                    </select>
+                    <input type="hidden" name="page" value="1"/>
+
+                    @foreach (var field in filterValues)
+                    {
+                        if (!string.IsNullOrWhiteSpace(field.Value))
+                        {
+                            <input type="hidden" name="@field.Key" value="@field.Value"/>
+                        }
+                    }
+                </form>
+            </div>
         </div>
-    </form>
-
-    <!-- Log Data -->
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>
-                    <a
-                        asp-action="List"
-                        asp-route-sort="@(Model.PaginationFilter.SortBy == "id_desc" ? "id" : "id_desc")"
-                        asp-route-search="@Model.PaginationFilter.Search"
-                        asp-route-userId="@Model.PaginationFilter.UserId"
-                        asp-route-limit="@Model.PaginationFilter.PageSize"
-                        asp-route-from="@Model.PaginationFilter.From?.ToString("yyyy-MM-ddTHH:mm")"
-                        asp-route-to="@Model.PaginationFilter.To?.ToString("yyyy-MM-ddTHH:mm")">
-                        Id
-                    </a>
-                </th>
-                <th>
-                    <a
-                        asp-action="List"
-                        asp-route-sort="@(Model.PaginationFilter.SortBy == "user_desc" ? "user" : "user_desc")"
-                        asp-route-search="@Model.PaginationFilter.Search"
-                        asp-route-userId="@Model.PaginationFilter.UserId"
-                        asp-route-limit="@Model.PaginationFilter.PageSize"
-                        asp-route-from="@Model.PaginationFilter.From?.ToString("yyyy-MM-ddTHH:mm")"
-                        asp-route-to="@Model.PaginationFilter.To?.ToString("yyyy-MM-ddTHH:mm")">
-                        UserId
-                    </a>
-                </th>
-                <th>
-                    <a
-                        asp-action="List"
-                        asp-route-sort="@(Model.PaginationFilter.SortBy == "timestamp_desc" ? "timestamp" : "timestamp_desc")"
-                        asp-route-search="@Model.PaginationFilter.Search"
-                        asp-route-userId="@Model.PaginationFilter.UserId"
-                        asp-route-limit="@Model.PaginationFilter.PageSize"
-                        asp-route-from="@Model.PaginationFilter.From?.ToString("yyyy-MM-ddTHH:mm")"
-                        asp-route-to="@Model.PaginationFilter.To?.ToString("yyyy-MM-ddTHH:mm")">
-                        Timestamp
-                    </a>
-                </th>
-                <th>
-                    <a
-                        asp-action="List"
-                        asp-route-sort="@(Model.PaginationFilter.SortBy == "action_desc" ? "action" : "action_desc")"
-                        asp-route-search="@Model.PaginationFilter.Search"
-                        asp-route-userId="@Model.PaginationFilter.UserId"
-                        asp-route-limit="@Model.PaginationFilter.PageSize"
-                        asp-route-from="@Model.PaginationFilter.From?.ToString("yyyy-MM-ddTHH:mm")"
-                        asp-route-to="@Model.PaginationFilter.To?.ToString("yyyy-MM-ddTHH:mm")">
-                        ActionType
-                    </a>
-                </th>
-                <th>
-                    Details
-                </th>
-                <th style="width: 1px;"></th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var item in Model.Data)
-            {
-                <tr>
-                    <td>@item.Id</td>
-                    <td>
-                        <a asp-controller="User" asp-action="View" asp-route-id="@item.UserId">
-                            @item.UserId
-                        </a>
-                    </td>
-                    <td>@item.Timestamp</td>
-                    <td>@item.ActionType</td>
-                    <td>@item.Details</td>
-                    <td>
-                        <a asp-action="View" asp-route-id="@item.Id">View</a>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
     </div>
-
-    <!-- Pagination + Page Size Container -->
-    <div class="d-flex justify-content-center align-items-center mb-3 position-relative">
-
-        <!-- Centered Pagination Buttons -->
-        <nav aria-label="Page navigation">
-            <ul class="pagination mb-0">
-                @if (filter.CurrentPage > 1)
-                {
-                    var firstPageRoute = new Dictionary<string, string>(filterValues)
-                    {
-                        { "page", "1" }
-                    };
-                    <li class="page-item">
-                        <a class="page-link"
-                           asp-route-page="1"
-                           asp-all-route-data="firstPageRoute">
-                            First
-                        </a>
-                    </li>
-                    var route = new Dictionary<string, string>(filterValues)
-                    {
-                        { "page", (filter.CurrentPage - 1).ToString() }
-                    };
-                    <li class="page-item">
-                        <a class="page-link" asp-all-route-data="route">Previous</a>
-                    </li>
-                }
-
-                @{
-                    var start = Math.Max(1, filter.CurrentPage - 5);
-                    var end = Math.Min(Model.TotalPages, filter.CurrentPage + 5);
-                }
-
-                @for (int i = start; i <= end; i++)
-                {
-                    var routeValues = new Dictionary<string, string>(filterValues)
-                    {
-                        { "page", i.ToString() }
-                    };
-
-                    <li class="page-item @(i == filter.CurrentPage ? "active" : "")">
-                        <a class="page-link" asp-all-route-data="routeValues">@i</a>
-                    </li>
-                }
-
-                @if (filter.CurrentPage < Model.TotalPages)
-                {
-                    var nextPageRoute = new Dictionary<string, string>(filterValues)
-                    {
-                        { "page", (filter.CurrentPage + 1).ToString() }
-                    };
-                    var lastPageRoute = new Dictionary<string, string>(filterValues)
-                    {
-                        { "page", Model.TotalPages.ToString() }
-                    };
-
-                    <li class="page-item">
-                        <a class="page-link" asp-all-route-data="nextPageRoute">Next</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" asp-all-route-data="lastPageRoute">Last</a>
-                    </li>
-                }
-            </ul>
-        </nav>
-
-        <!-- Page Size Dropdown (absolutely positioned to the right) -->
-        <form method="get" asp-action="List" class="position-absolute end-0">
-            <select id="limit" name="limit" class="form-select w-auto" onchange="this.form.submit()">
-                @foreach (var size in new[] { 5, 10, 15, 20 })
-                {
-                    if (size == Model.PaginationFilter.PageSize)
-                    {
-                        <option value="@size" selected>@size</option>
-                    }
-                    else
-                    {
-                        <option value="@size">@size</option>
-                    }
-                }
-            </select>
-            <input type="hidden" name="page" value="1"/>
-
-            @foreach (var field in filterValues)
-            {
-                if (!string.IsNullOrWhiteSpace(field.Value))
-                {
-                    <input type="hidden" name="@field.Key" value="@field.Value"/>
-                }
-            }
-
-        </form>
-    </div>}
+</div>

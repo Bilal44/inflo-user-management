@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sql-server-container
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Password1
+
+  inflo-um-api:
+    build:
+      context: .
+      dockerfile: UserManagement.Api/Dockerfile
+    ports:
+      - "5000:8080"
+    depends_on:
+      sql-server:
+        condition: service_started
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Release
+      - ConnectionStrings__UserManagementDb=Server=sql-server;Database=user-management-db;Persist Security Info=False;User ID=sa;Password=Password1;MultipleActiveResultSets=False;Connection Timeout=30;TrustServerCertificate=true
+      - Authentication__ApiKey=docker-key
+      - Hangfire__Credentials__Username=inflo
+      - Hangfire__Credentials__Password=pass
+    image: inflo-um-api-img:${BUILD_NUMBER:-latest}
+    container_name: inflo-um-api-container
+
+  inflo-um-web:
+    build:
+      context: .
+      dockerfile: UserManagement.Web/Dockerfile
+    ports:
+      - "5050:8080"
+    depends_on:
+      inflo-um-api:
+        condition: service_started
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Release
+      - ConnectionStrings__UserManagementDb=Server=sql-server;Database=user-management-db;Persist Security Info=False;User ID=sa;Password=Password1;MultipleActiveResultSets=False;Connection Timeout=30;TrustServerCertificate=true
+      - Hangfire__Credentials__Username=inflo
+      - Hangfire__Credentials__Password=pass
+    image: inflo-um-web-img:${BUILD_NUMBER:-latest}
+    container_name: inflo-um-web-container
+
+  inflo-um-client:
+    build:
+      context: .
+      dockerfile: UserManagement.Client/Dockerfile
+    ports:
+      - "5100:8080"
+    depends_on:
+      inflo-um-api:
+        condition: service_started
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Release
+      - Api__BaseUrl=http://inflo-um-api:8080/api/
+      - Api__ApiKey=docker-key
+    image: inflo-um-client-img:${BUILD_NUMBER:-latest}
+    container_name: inflo-um-client-container
